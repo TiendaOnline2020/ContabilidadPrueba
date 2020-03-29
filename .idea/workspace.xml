@@ -2,9 +2,14 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="03f26b44-1e81-431d-9099-b83a22b808d6" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/detalle/migrations/0003_remove_detalle_documento.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/documento/migrations/0005_auto_20200329_1635.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ContabilidadPrueba/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/ContabilidadPrueba/settings.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/detalle/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/detalle/admin.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/detalle/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/detalle/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/documento/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/documento/admin.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/documento/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/documento/models.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -102,6 +107,9 @@
       <workItem from="1584596653856" duration="623000" />
       <workItem from="1584819422470" duration="599000" />
       <workItem from="1585101463490" duration="1207000" />
+      <workItem from="1585326230181" duration="716000" />
+      <workItem from="1585511286210" duration="168000" />
+      <workItem from="1585517284496" duration="1558000" />
     </task>
     <servers />
   </component>

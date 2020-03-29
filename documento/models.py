@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 import requests
+from detalle.models import detalle
 
 def validar_ruc(value):
     try:
@@ -15,10 +16,12 @@ def validar_ruc(value):
             raise ValidationError('No es un numero RUC')
     except ValueError:
         raise ValidationError('Admite numeros')
+
+
 def verificar_fecha(value):
     from datetime import date
     fecha = date.today()
-    if fecha<value:
+    if fecha < value:
         raise ValidationError('Fecha no admitida')
     elif fecha == value:
         raise ValidationError('No es posible la facha actual')
@@ -37,50 +40,52 @@ def verificar_fecha(value):
         elif d == 1:
             raise ValidationError('La fecha no puede ser Lunes')
 
+
 tipo_documento = (
-    ('factura','Factura'),
-    ('boleta','Boleta'),
-    ('comprobante','Comprobante'),
-    ('nota_de_credito','Nota de Credito'),
-    ('nota_de_debito','Nota de Debito')
+    ('factura', 'Factura'),
+    ('boleta', 'Boleta'),
+    ('comprobante', 'Comprobante'),
+    ('nota_de_credito', 'Nota de Credito'),
+    ('nota_de_debito', 'Nota de Debito')
 )
 tipo_moneda = (
-    ('soles','Soles'),
-    ('dolar','Dolar'),
-    ('euro','Euro'),
+    ('soles', 'Soles'),
+    ('dolar', 'Dolar'),
+    ('euro', 'Euro'),
 )
 tipo_cambio_choices = (
-    ('compra','Compra'),
-    ('venta','Venta')
+    ('compra', 'Compra'),
+    ('venta', 'Venta')
 )
-
-
-
 
 
 class documento(models.Model):
-    periodo = models.DateField(auto_now=False, auto_now_add=False)
-    serie = models.CharField(max_length=255)
-    n_documento = models.CharField(max_length=255, verbose_name="Nº Documento")
-    ruc = models.CharField(max_length=12, verbose_name="RUC", validators=[validar_ruc])
+    periodo = models.DateField(auto_now=False, auto_now_add=False, null=True, blank=True)
+    serie = models.CharField(max_length=255, null=True, blank=True)
+    n_documento = models.CharField(max_length=255, verbose_name="Nº Documento", null=True, blank=True)
+    ruc = models.CharField(max_length=11, verbose_name="RUC", validators=[validar_ruc])
     monto = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True)
     documento = models.CharField(max_length=50, choices=tipo_documento, null=True, blank=True)
     moneda = models.CharField(max_length=50, choices=tipo_moneda, default="soles")
-    fecha = models.DateField(auto_now=False, auto_now_add=False,validators=[verificar_fecha])
+    fecha = models.DateField(auto_now=False, auto_now_add=False, validators=[verificar_fecha])
     tc = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, verbose_name='Valor TC')
-    tipo_cambio = models.CharField(max_length=255, choices=tipo_cambio_choices,verbose_name="Tipo de Cambio")
+    tipo_cambio = models.CharField(max_length=255, choices=tipo_cambio_choices, verbose_name="Tipo de Cambio")
     actualizar_tc = models.BooleanField(default=True)
     empresa = models.ForeignKey(empresa, null=True, on_delete=models.CASCADE)
     razon_social = models.CharField(max_length=255, verbose_name="Razon Social")
     actualizar_ruc = models.BooleanField(default=True)
     primer_gurdado = models.BooleanField(default=True)
+    detalles = models.ManyToManyField(detalle, blank=True)
+
     def __str__(self):
         return self.n_documento
+
     def save(self, *args, **kwargs):
+        '''
         if self.primer_gurdado:
             from detalle.models import detalle
             detalles = detalle.objects.filter(documento__id=self.id)
-            if len(detalles)>0:
+            if len(detalles) > 0:
                 print(len(detalles + "esto es"))
                 total_pagar = 0
                 for detalle_objeto in detalles:
@@ -89,6 +94,7 @@ class documento(models.Model):
                 self.primer_gurdado = False
             else:
                 self.monto = None
+        '''
         if self.actualizar_ruc:
             url = settings.URL_API_SUNAT
             url += self.ruc
@@ -103,7 +109,7 @@ class documento(models.Model):
                 url = settings.URL_TIPO_CAMBIO_SUNAT
                 url += str(self.fecha)
                 print(url)
-                fecha_str = ""+str(self.fecha)+""
+                fecha_str = "" + str(self.fecha) + ""
                 informacion = requests.get(url).json()
                 print(informacion)
                 compra_venta = informacion[fecha_str]
@@ -113,3 +119,8 @@ class documento(models.Model):
                 else:
                     self.tc = float(compra_venta['venta'])
         super(documento, self).save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        for detalles_objeto in self.detalles.all():
+            detalles_objeto.delete()
+        super(documento, self).delete(*args, **kwargs)

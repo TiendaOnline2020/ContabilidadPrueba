@@ -1,9 +1,12 @@
 from django.contrib import admin
+from django import forms
+
 from .models import documento
 # Register your models here.
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.admin import SimpleListFilter
 from detalle.models import detalle
+
 
 class StatusFilter(SimpleListFilter):
     title = _('Tipo de Cambio')
@@ -30,27 +33,49 @@ class StatusFilter(SimpleListFilter):
     def queryset(self, request, queryset):
         if self.value() in ('compra', 'venta'):
             if self.value() == 'compra':
-                return queryset.filter(empresa=request.user.empresa,tipo_cambio=str(self.value()))
+                return queryset.filter(empresa=request.user.empresa, tipo_cambio=str(self.value()))
             return queryset.filter(empresa=request.user.empresa, tipo_cambio=str(self.value()))
         elif self.value() == None:
             return queryset.filter(empresa=request.user.empresa)
 
+class CustomerForm(forms.ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        super(CustomerForm, self).__init__(*args, **kwargs)
+
+        if not self.instance.id:
+            wtf = detalle.objects.filter(id=0)
+        else:
+            wtf = self.instance.detalles.all()
+        w = self.fields['detalles'].widget
+        if wtf.exists():
+            choices = []
+            for choice in wtf:
+                palabra = str(choice.descripcion)[0:8]
+                choices.append((choice.id, palabra))
+            w.choices = choices
+        else:
+            w.choices = []
 class Admin(admin.ModelAdmin):
-    list_display = ('n_documento', 'ruc', 'razon_social', 'empresa','tipo_cambio','tc','monto')
+    list_display = ('n_documento', 'ruc', 'razon_social', 'empresa', 'tipo_cambio', 'tc', 'monto')
+
     def save_model(self, request, obj, form, change):
         obj.empresa = request.user.empresa
         super(Admin, self).save_model(request, obj, form, change)
+    form = CustomerForm
     fields = (
         'periodo',
         'serie',
         'n_documento',
         ('ruc', 'actualizar_ruc'),
         'documento',
-        ('moneda','tipo_cambio'),
-        ('fecha','tc','actualizar_tc'),
+        ('moneda', 'tipo_cambio'),
+        ('fecha', 'tc', 'actualizar_tc'),
+        'detalles'
     )
     list_filter = [StatusFilter]
     actions = ['Actualizar_Monto']
+
     def Actualizar_Monto(self, request, queryset):
         for objeto in queryset:
             detalles = detalle.objects.filter(documento=objeto)
@@ -62,8 +87,10 @@ class Admin(admin.ModelAdmin):
             objeto.actualizar_ruc = False
             objeto.actualizar_tc = False
             objeto.save()
+
     Actualizar_Monto.allow_tags = True
     Actualizar_Monto.short_description = 'Actualizar Montos'
     date_hierarchy = 'periodo'
+
 
 admin.site.register(documento, Admin)
